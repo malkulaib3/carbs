@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>عدّاد الكربوهيدرات</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#0f766e">
+<style>
+:root{--bg:#f4f7f6;--card:#fff;--tx:#12302c;--mut:#5d7873;--pri:#0f766e;--acc:#f59e0b;--bd:#d8e3e0;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1a18;--card:#17282500;--card:#172825;--tx:#e6f2ef;--mut:#9bb5b0;--pri:#2dd4bf;--bd:#2a3f3b;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;background:var(--bg);color:var(--tx);padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+header{padding:14px 16px;background:var(--pri);color:#fff}
+header h1{margin:0;font-size:20px}
+@media (prefers-color-scheme:dark){header{color:#06201c}}
+main{max-width:520px;margin:0 auto;padding:14px}
+button,input{font:inherit;color:inherit}
+button{border:0;border-radius:12px;padding:12px 14px;background:var(--card);border:1px solid var(--bd);cursor:pointer}
+.big{width:100%;background:var(--pri);color:#fff;font-size:20px;padding:18px;border:0}
+@media (prefers-color-scheme:dark){.big{color:#06201c}}
+.row{display:flex;gap:8px;margin:12px 0}
+input{flex:1;min-width:0;padding:12px;border-radius:12px;border:1px solid var(--bd);background:var(--card)}
+#list button{display:block;width:100%;text-align:right;margin-bottom:6px}
+#card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;margin-top:8px}
+#card h2{margin:0;font-size:19px}
+small,.mut{color:var(--mut)}
+.carb{text-align:center;margin:14px 0;padding:14px;border-radius:14px;background:color-mix(in srgb,var(--acc) 18%,transparent)}
+.carb b{display:block;font-size:56px;line-height:1.1}
+.qty{display:flex;gap:8px;margin:6px 0}
+.qty button{width:52px;font-size:22px;padding:8px}
+.qty input{text-align:center;font-size:20px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.chips button{flex:1;padding:8px}
+.chips button.on{background:var(--pri);color:#fff}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+td{padding:5px 0;border-top:1px solid var(--bd)}
+td:last-child{text-align:left}
+#msg{color:#b45309;min-height:1.5em}
+details{margin-top:18px}
+summary{cursor:pointer;color:var(--mut)}
+details .row{flex-wrap:wrap}
+details button{flex:1}
+.note{font-size:12px;color:var(--mut);margin-top:14px}
+#cam{position:fixed;inset:0;background:#000;z-index:9;display:flex;flex-direction:column}
+#cam[hidden]{display:none}
+#cam video{flex:1;width:100%;object-fit:cover}
+#cam .frame{position:absolute;inset:30% 10%;border:3px solid #f59e0b;border-radius:14px;pointer-events:none}
+#cam button{margin:14px;padding:14px;background:#fff;color:#000}
+</style>
+</head>
+<body>
+<header><h1>🩸 عدّاد الكربوهيدرات</h1></header>
+<main>
+  <button class="big" id="scanBtn">📷 امسح الباركود</button>
+  <div class="row">
+    <input id="q" inputmode="search" placeholder="أو اكتب الباركود / اسم الوجبة">
+    <button id="goBtn">بحث</button>
+  </div>
+  <div id="msg"></div>
+  <div id="list"></div>
+
+  <section id="card" hidden>
+    <h2 id="nm"></h2><small id="bcTxt"></small>
+    <div class="carb"><b id="carbs">0</b>جم كربوهيدرات في الكمية المختارة</div>
+    <label class="mut">الكمية التي ستتناولها (جم/مل)</label>
+    <div class="qty"><button id="minus">−</button><input id="g" type="number" inputmode="decimal" min="0" step="1"><button id="plus">+</button></div>
+    <div class="chips" id="chips"></div>
+    <table id="det"></table>
+    <button class="big" id="again" style="margin-top:14px">🔍 بحث جديد</button>
+  </section>
+
+  <details>
+    <summary>⚙️ قاعدة البيانات والتحديث</summary>
+    <p id="stat" class="mut"></p>
+    <div class="row">
+      <button id="fileBtn">📂 تحديث من ملف Excel</button>
+      <button id="syncBtn">🔄 مزامنة من الإنترنت</button>
+      <button id="urlBtn">🔗 رابط ملف Excel</button>
+    </div>
+    <input type="file" id="file" accept=".xlsx,.xls,.csv" hidden>
+  </details>
+  <p class="note">الإصدار: v5</p>
+  <p class="note">القيم مأخوذة من الملصق الغذائي وتقريبية؛ تحقّق من الملصق عند الشك، واتبع خطة جرعات الإنسولين التي حددها طبيبك.</p>
+</main>
+
+<div id="cam" hidden><video id="v" playsinline muted></video><div class="frame"></div><div style="position:absolute;top:12px;width:100%;text-align:center;color:#fff">قرّب الباركود داخل الإطار وثبّت الجوال</div><button id="camSearch">🔍 تعذّر المسح؟ ابحث بالاسم</button><button id="closeCam">إغلاق الكاميرا</button></div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+
+/*PARSE*/
+const N=s=>String(s==null?'':s).toLowerCase().replace(/[\u064B-\u0652\u0640]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/\s+/g,' ').trim();
+const num=v=>{if(v==null||v==='')return null;const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:null};
+const digits=v=>String(v==null?'':v).replace(/\D/g,'');
+const normBC=v=>digits(v).replace(/^0+/,'');
+// أسماء الأعمدة المقبولة (عربي/إنجليزي). المطابقة العربية تحتمل وجود كلمات إضافية في العنوان.
+const COLS={
+  name:['pname','اسم الوجبة','اسم المنتج','الاسم','name'],
+  barcode:['الباركود','barcode'],
+  serving:['حجم الحصة','serving','serving size'],
+  carbs:['الكربوهيدرات الكلية','total carbs','carbs'],
+  fiber:['الألياف','fiber'],
+  sugar:['السكريات الكلية','sugars','sugar'],
+  fat:['الدهون','fat'],
+  protein:['البروتين','protein']
+};
+const isAr=s=>/[\u0600-\u06FF]/.test(s);
+function parseRows(aoa){
+  const col={};let top=aoa.length;
+  for(let r=0;r<Math.min(10,aoa.length);r++)(aoa[r]||[]).forEach((c,i)=>{
+    if(typeof c!=='string')return;const t=N(c);
+    for(const k in COLS){
+      if(k in col)continue;
+      if(COLS[k].some(p=>{p=N(p);return t===p||(isAr(p)&&t.includes(p))})){col[k]=i;top=Math.min(top,r)}
+    }
+  });
+  if(!('barcode' in col)||!('serving' in col)||!('carbs' in col))throw new Error('لم أجد أعمدة الباركود/حجم الحصة/الكربوهيدرات الكلية في الملف');
+  const items=[];
+  for(let r=top+1;r<aoa.length;r++){
+    const row=aoa[r]||[];
+    const bc=digits(row[col.barcode]),s=num(row[col.serving]),c=num(row[col.carbs]);
+    const nm=String(row[col.name]==null?'':row[col.name]).trim();
+    // الباركود اختياري: الوجبة بدون باركود (مثل الفواكه) تُقبل إذا كان لها اسم
+    if(!s||s<=0||c==null||(normBC(bc).length<6&&!nm))continue;
+    const g=k=>k in col?num(row[col[k]]):null;
+    items.push({bc:normBC(bc).length<6?'':bc,name:nm||bc,s,c,fiber:g('fiber'),sugar:g('sugar'),fat:g('fat'),prot:g('protein')});
+  }
+  if(!items.length)throw new Error('لا توجد وجبات صالحة في الملف');
+  return items;
+}
+/*END*/
+
+// ---------- التخزين ----------
+let st=JSON.parse(localStorage.getItem('carbdb')||'null')||{items:[],updated:null,source:'web',url:''};
+const save=()=>localStorage.setItem('carbdb',JSON.stringify(st));
+const msg=t=>{$('#msg').textContent=t||''};
+function renderStat(){
+  $('#stat').textContent=st.items.length?`عدد الوجبات: ${st.items.length} · آخر تحديث: ${new Date(st.updated).toLocaleString('ar-SA')} · المصدر: ${st.source==='file'?'ملف على الجوال':'الإنترنت'}`:'لا توجد بيانات بعد — اختر ملف Excel.';
+}
+function loadBuf(buf){
+  const wb=XLSX.read(buf,{type:'array'});
+  const aoa=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true,defval:null});
+  return parseRows(aoa);
+}
+async function sync(){
+  const u=st.url||'meals.xlsx';
+  const res=await fetch(u+(u.includes('?')?'&':'?')+'t='+Date.now(),{cache:'no-store'});
+  if(!res.ok)throw new Error('تعذر تحميل الملف ('+res.status+')');
+  st.items=loadBuf(await res.arrayBuffer());st.updated=Date.now();st.source='web';save();renderStat();
+}
+$('#fileBtn').onclick=()=>$('#file').click();
+$('#file').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{st.items=loadBuf(await f.arrayBuffer());st.updated=Date.now();st.source='file';save();renderStat();msg('تم تحديث القاعدة: '+st.items.length+' وجبة')}
+  catch(err){msg('تعذر قراءة الملف: '+err.message)}
+  e.target.value='';
+};
+$('#syncBtn').onclick=async()=>{try{await sync();msg('تمت المزامنة: '+st.items.length+' وجبة')}catch(e){msg('تعذرت المزامنة: '+e.message)}};
+$('#urlBtn').onclick=()=>{
+  const u=prompt('رابط ملف Excel (xlsx) المستضاف. اتركه فارغًا لاستخدام meals.xlsx الموجود مع التطبيق:',st.url||'');
+  if(u===null)return;st.url=u.trim();st.source='web';save();$('#syncBtn').click();
+};
+
+// ---------- البحث والعرض ----------
+let cur=null;
+function lookup(code){
+  const b=normBC(code);
+  const it=b&&st.items.find(i=>i.bc&&normBC(i.bc)===b);
+  $('#list').innerHTML='';
+  if(!it){$('#card').hidden=true;msg('الباركود '+digits(code)+' غير موجود في القاعدة. جرّب البحث بالاسم، أو أضفه في ملف Excel ثم حدّث.');return}
+  msg('');show(it);
+}
+function search(live){
+  const q=$('#q').value.trim();
+  if(!q){$('#list').innerHTML='';return}
+  if(/^[\d\s]{6,}$/.test(q)){if(!live)lookup(q);return}
+  const w=N(q).split(' ').filter(Boolean);
+  const st0=x=>x.replace(/^ال/,'');
+  const strict=i=>{const ws=N(i.name).split(/[\s\-–]+/);return w.every(x=>ws.some(y=>y.startsWith(x)||st0(y).startsWith(st0(x))))};
+  let hits=st.items.filter(strict);
+  if(!hits.length)hits=st.items.filter(i=>{const n=N(i.name);return w.every(x=>n.includes(x))});
+  hits=hits.slice(0,15);
+  $('#card').hidden=true;
+  $('#list').innerHTML='';
+  msg(hits.length?'':'لا توجد نتائج مطابقة للاسم');
+  hits.forEach(i=>{const b=document.createElement('button');b.textContent=i.name;b.onclick=()=>{$('#list').innerHTML='';show(i)};$('#list').append(b)});
+}
+const r1=x=>Math.round(x*10)/10;
+const r0=x=>Math.round(x);
+function show(it){
+  cur=it;$('#card').hidden=false;
+  $('#nm').textContent=it.name;$('#bcTxt').textContent=(it.bc?'الباركود: '+it.bc+' · ':'')+'حجم الحصة: '+it.s+' جم/مل';
+  $('#g').value=it.s;
+  $('#chips').innerHTML='';
+  [[0.5,'½ حصة'],[1,'حصة'],[1.5,'1½ حصة'],[2,'حصتان']].forEach(([m,l])=>{
+    const b=document.createElement('button');b.textContent=l;b.dataset.m=m;
+    b.onclick=()=>{$('#g').value=r1(it.s*m);upd()};$('#chips').append(b)});
+  upd();$('#card').scrollIntoView({behavior:'smooth'});
+}
+function upd(){
+  if(!cur)return;
+  const g=Math.max(0,parseFloat($('#g').value)||0),k=g/cur.s;
+  $('#carbs').textContent=r0(cur.c*k);
+  document.querySelectorAll('#chips button').forEach(b=>b.classList.toggle('on',Math.abs(cur.s*b.dataset.m-g)<0.05));
+  const rows=[['الألياف',cur.fiber],['السكريات',cur.sugar],['الدهون',cur.fat],['البروتين',cur.prot]].filter(r=>r[1]!=null);
+  let h=rows.map(([l,v])=>`<tr><td>${l}</td><td>${r0(v*k)} جم</td></tr>`).join('');
+  const eq=((cur.fat||0)*9+(cur.prot||0)*4)/10*k;
+  if(eq>=1)h+=`<tr><td>مكافئ الدهون والبروتين (FPU) <small>للمتقدمين</small></td><td>≈ ${r0(eq)} جم</td></tr>`;
+  $('#det').innerHTML=h;
+}
+$('#g').oninput=upd;
+$('#plus').onclick=()=>{$('#g').value=r1((parseFloat($('#g').value)||0)+5);upd()};
+$('#minus').onclick=()=>{$('#g').value=Math.max(0,r1((parseFloat($('#g').value)||0)-5));upd()};
+$('#goBtn').onclick=()=>search();
+$('#q').oninput=()=>search(true);
+$('#q').onkeydown=e=>{if(e.key==='Enter')search()};
+$('#camSearch').onclick=()=>{closeCam();$('#q').focus()};
+
+// ---------- الكاميرا ----------
+let stream=null,scanning=false,reader=null,hits={};
+// التحقق من رقم المراقبة (EAN-13 / EAN-8 / UPC-A) لرفض القراءات الخاطئة
+function validBC(c){c=digits(c);if(![8,12,13].includes(c.length))return false;const d=c.split('').map(Number),k=d.pop();let s=0;d.reverse().forEach((x,i)=>s+=x*(i%2?1:3));return (10-s%10)%10===k}
+// لا نقبل الرقم إلا إذا كان صحيحًا وقُرئ مرتين على الأقل
+function cand(code){code=digits(code);if(!scanning||!validBC(code))return;hits[code]=(hits[code]||0)+1;if(hits[code]>=2)done(code)}
+const loadZX=()=>new Promise((ok,no)=>{if(window.ZXing)return ok();const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';s.onload=ok;s.onerror=no;document.head.append(s)});
+async function openCam(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){msg('الكاميرا تحتاج فتح التطبيق عبر رابط آمن (https).');return}
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false})}
+  catch(e){msg('تعذر فتح الكاميرا، تأكد من السماح بالإذن.');return}
+  $('#cam').hidden=false;const v=$('#v');v.srcObject=stream;await v.play();scanning=true;hits={};
+  try{await stream.getVideoTracks()[0].applyConstraints({advanced:[{focusMode:'continuous'}]})}catch(e){}
+  if('BarcodeDetector' in window){
+    const d=new BarcodeDetector({formats:['ean_13','ean_8','upc_a']});
+    const tick=async()=>{if(!scanning)return;try{const r=await d.detect(v);for(const b of r)cand(b.rawValue)}catch(e){}if(scanning)setTimeout(tick,120)};
+    tick();
+  }else{
+    try{await loadZX();const hn=new Map();hn.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8,ZXing.BarcodeFormat.UPC_A]);hn.set(ZXing.DecodeHintType.TRY_HARDER,true);
+    reader=new ZXing.BrowserMultiFormatReader(hn);reader.decodeFromVideoElement(v,r=>{if(r)cand(r.getText())})}
+    catch(e){closeCam();msg('تعذر تحميل ماسح الباركود (يلزم اتصال بالإنترنت أول مرة).')}
+  }
+}
+function closeCam(){scanning=false;try{reader&&reader.reset()}catch(e){}reader=null;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$('#v').srcObject=null;$('#cam').hidden=true}
+function done(code){if(navigator.vibrate)navigator.vibrate(80);closeCam();$('#q').value=digits(code);lookup(code)}
+function resetAll(){$('#card').hidden=true;$('#list').innerHTML='';$('#q').value='';msg('');cur=null}
+$('#again').onclick=()=>{resetAll();window.scrollTo({top:0,behavior:'smooth'})};
+$('#scanBtn').onclick=()=>{resetAll();openCam()};$('#closeCam').onclick=closeCam;
+
+// ---------- بدء التشغيل ----------
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+renderStat();
+if(st.source!=='file'&&location.protocol!=='file:'){
+  sync().catch(()=>{if(!st.items.length)msg('تعذر تحميل القاعدة. اختر ملف Excel من الإعدادات.')});
+}else if(!st.items.length){msg('اختر ملف Excel من الإعدادات لبدء الاستخدام.')}
+</script>
+</body>
+</html>
