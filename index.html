@@ -220,18 +220,18 @@ $('#q').oninput=()=>search(true);
 $('#q').onkeydown=e=>{if(e.key==='Enter')search()};
 
 // ---------- الكاميرا ----------
-let stream=null,scanning=false,reader=null,hits={},camHist=false;
-window.addEventListener('popstate',()=>{camHist=false;closeCam()});
+let stream=null,scanning=false,reader=null,hits={},camHist=false,camStart=0,lastCode='';
+window.addEventListener('popstate',()=>{camHist=false;if(!$('#cam').hidden){lastCode='';closeCam()}});
 // التحقق من رقم المراقبة (EAN-13 / EAN-8 / UPC-A) لرفض القراءات الخاطئة
 function validBC(c){c=digits(c);if(![8,12,13].includes(c.length))return false;const d=c.split('').map(Number),k=d.pop();let s=0;d.reverse().forEach((x,i)=>s+=x*(i%2?1:3));return (10-s%10)%10===k}
 // لا نقبل الرقم إلا إذا كان صحيحًا وقُرئ مرتين على الأقل
-function cand(code){code=digits(code);if(!scanning||!validBC(code))return;hits[code]=(hits[code]||0)+1;if(hits[code]>=2)done(code)}
+function cand(code){code=digits(code);if(!scanning||!validBC(code))return;if(Date.now()-camStart<1500||code===lastCode)return;hits[code]=(hits[code]||0)+1;if(hits[code]>=2)done(code)}
 const loadZX=()=>new Promise((ok,no)=>{if(window.ZXing)return ok();const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';s.onload=ok;s.onerror=no;document.head.append(s)});
 async function openCam(){
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){msg('الكاميرا تحتاج فتح التطبيق عبر رابط آمن (https).');return}
   try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false})}
   catch(e){msg('تعذر فتح الكاميرا، تأكد من السماح بالإذن.');return}
-  $('#cam').hidden=false;history.pushState({cam:1},'');camHist=true;const v=$('#v');v.srcObject=stream;await v.play();scanning=true;hits={};
+  $('#cam').hidden=false;history.pushState({cam:1},'');camHist=true;const v=$('#v');v.srcObject=stream;await v.play();scanning=true;hits={};camStart=Date.now();
   try{await stream.getVideoTracks()[0].applyConstraints({advanced:[{focusMode:'continuous'}]})}catch(e){}
   if('BarcodeDetector' in window){
     const d=new BarcodeDetector({formats:['ean_13','ean_8','upc_a']});
@@ -244,10 +244,10 @@ async function openCam(){
   }
 }
 function closeCam(){scanning=false;try{reader&&reader.reset()}catch(e){}reader=null;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$('#v').srcObject=null;$('#cam').hidden=true}
-function done(code){if(navigator.vibrate)navigator.vibrate(80);closeCam();$('#q').value=digits(code);lookup(code)}
+function done(code){if(navigator.vibrate)navigator.vibrate(80);closeCam();lastCode=digits(code);$('#q').value=digits(code);lookup(code)}
 function resetAll(){$('#card').hidden=true;$('#list').innerHTML='';$('#q').value='';msg('');cur=null}
 $('#again').onclick=()=>{resetAll();window.scrollTo({top:0});openCam()};
-$('#scanBtn').onclick=()=>{resetAll();openCam()};$('#closeCam').onclick=()=>{if(camHist)history.back();else closeCam()};
+$('#scanBtn').onclick=()=>{lastCode='';resetAll();openCam()};$('#closeCam').onclick=()=>{lastCode='';if(camHist)history.back();else closeCam()};
 
 // ---------- بدء التشغيل ----------
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
