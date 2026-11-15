@@ -38,6 +38,7 @@ small,.mut{color:var(--mut)}
 table{width:100%;border-collapse:collapse;margin-top:10px}
 td{padding:5px 0;border-top:1px solid var(--bd)}
 td:last-child{text-align:left}
+.srv{margin:10px 0 0;padding:10px 12px;border:2px solid var(--acc);border-radius:12px;background:color-mix(in srgb,var(--acc) 14%,transparent);font-weight:600}
 #msg{color:#b45309;min-height:1.5em}
 details{margin-top:18px}
 summary{cursor:pointer;color:var(--mut)}
@@ -64,6 +65,7 @@ details button{flex:1}
 
   <section id="card" hidden>
     <h2 id="nm"></h2><small id="bcTxt"></small>
+    <div id="srv" class="srv"></div>
     <div class="carb"><b id="carbs">0</b>جم كربوهيدرات في الكمية المختارة</div>
     <label class="mut">الكمية التي ستتناولها (جم/مل)</label>
     <div class="qty"><button id="minus">−</button><input id="g" type="number" inputmode="decimal" min="0" step="1"><button id="plus">+</button></div>
@@ -194,6 +196,7 @@ const r0=x=>Math.round(x);
 function show(it){
   cur=it;$('#card').hidden=false;
   $('#nm').textContent=it.name;$('#bcTxt').textContent=(it.bc?'الباركود: '+it.bc+' · ':'')+'حجم الحصة: '+it.s+' جم/مل';
+  $('#srv').textContent='⚠️ تأكد من حجم الحصة التي ستتناولها. حجم الحصة المسجّل في الملف: '+it.s+' جم/مل';
   $('#g').value=it.s;
   $('#chips').innerHTML='';
   [[0.5,'½ حصة'],[1,'حصة'],[1.5,'1½ حصة'],[2,'حصتان']].forEach(([m,l])=>{
