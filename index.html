@@ -82,11 +82,11 @@ details button{flex:1}
     </div>
     <input type="file" id="file" accept=".xlsx,.xls,.csv" hidden>
   </details>
-  <p class="note"><a href="help.html">📖 تعليمات الاستخدام</a> · الإصدار: v7</p>
+  <p class="note"><a href="help.html">📖 تعليمات الاستخدام</a> · الإصدار: v6</p>
   <p class="note">القيم مأخوذة من الملصق الغذائي وتقريبية؛ تحقّق من الملصق عند الشك، واتبع خطة جرعات الإنسولين التي حددها طبيبك.</p>
 </main>
 
-<div id="cam" hidden><video id="v" playsinline muted></video><div class="frame"></div><div style="position:absolute;top:12px;width:100%;text-align:center;color:#fff">قرّب الباركود داخل الإطار وثبّت الجوال</div><button id="camSearch">🔍 تعذّر المسح؟ ابحث بالاسم</button><button id="closeCam">↩ العودة للصفحة الرئيسية</button></div>
+<div id="cam" hidden><video id="v" playsinline muted></video><div class="frame"></div><div style="position:absolute;top:12px;width:100%;text-align:center;color:#fff">قرّب الباركود داخل الإطار وثبّت الجوال</div><button id="closeCam">إغلاق الكاميرا</button></div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
@@ -218,7 +218,6 @@ $('#minus').onclick=()=>{$('#g').value=Math.max(0,r1((parseFloat($('#g').value)|
 $('#goBtn').onclick=()=>search();
 $('#q').oninput=()=>search(true);
 $('#q').onkeydown=e=>{if(e.key==='Enter')search()};
-$('#camSearch').onclick=()=>{closeCam();$('#q').focus()};
 
 // ---------- الكاميرا ----------
 let stream=null,scanning=false,reader=null,hits={},camHist=false;
