@@ -67,7 +67,7 @@ details button{flex:1}
     <h2 id="nm"></h2><small id="bcTxt"></small>
     <div id="srv" class="srv"></div>
     <div class="carb"><b id="carbs">0</b>جم كربوهيدرات في الكمية المختارة</div>
-    <label class="mut">الكمية التي ستتناولها (جم/مل)</label>
+    <label class="mut" id="ulbl">الكمية التي ستتناولها (جم/مل)</label>
     <div class="qty"><button id="minus">−</button><input id="g" type="number" inputmode="decimal" min="0" step="1"><button id="plus">+</button></div>
     <div class="chips" id="chips"></div>
     <table id="det"></table>
@@ -108,8 +108,10 @@ const COLS={
   fiber:['الألياف','fiber'],
   sugar:['السكريات الكلية','sugars','sugar'],
   fat:['الدهون','fat'],
-  protein:['البروتين','protein']
+  protein:['البروتين','protein'],
+  unit:['الوحدة','وحدة','unit']
 };
+const normU=v=>{const t=N(v);if(!t)return '';if(/^(جم|غ|غم|جرام|غرام|g|gr|gram)$/.test(t))return 'جم';if(/^(مل|ملل|مللتر|ml)$/.test(t))return 'مل';return String(v).trim()};
 const isAr=s=>/[\u0600-\u06FF]/.test(s);
 function parseRows(aoa){
   const col={};let top=aoa.length;
@@ -117,6 +119,7 @@ function parseRows(aoa){
     if(typeof c!=='string')return;const t=N(c);
     for(const k in COLS){
       if(k in col)continue;
+      if(k!=='unit'&&isAr(t)&&t.includes('وحده'))continue;
       if(COLS[k].some(p=>{p=N(p);return t===p||(isAr(p)&&t.includes(p))})){col[k]=i;top=Math.min(top,r)}
     }
   });
@@ -129,7 +132,7 @@ function parseRows(aoa){
     // الباركود اختياري: الوجبة بدون باركود (مثل الفواكه) تُقبل إذا كان لها اسم
     if(!s||s<=0||c==null||(normBC(bc).length<6&&!nm))continue;
     const g=k=>k in col?num(row[col[k]]):null;
-    items.push({bc:normBC(bc).length<6?'':bc,name:nm||bc,s,c,fiber:g('fiber'),sugar:g('sugar'),fat:g('fat'),prot:g('protein')});
+    items.push({bc:normBC(bc).length<6?'':bc,name:nm||bc,s,c,fiber:g('fiber'),sugar:g('sugar'),fat:g('fat'),prot:g('protein'),u:('unit' in col)?normU(row[col.unit]):''});
   }
   if(!items.length)throw new Error('لا توجد وجبات صالحة في الملف');
   return items;
@@ -195,8 +198,10 @@ const r1=x=>Math.round(x*10)/10;
 const r0=x=>Math.round(x);
 function show(it){
   cur=it;$('#card').hidden=false;
-  $('#nm').textContent=it.name;$('#bcTxt').textContent=(it.bc?'الباركود: '+it.bc+' · ':'')+'حجم الحصة: '+it.s+' جم/مل';
-  $('#srv').textContent='⚠️ تأكد من حجم الحصة التي ستتناولها. حجم الحصة المسجّل في الملف: '+it.s+' جم/مل';
+  const u=it.u||'جم/مل';
+  $('#ulbl').textContent='الكمية التي ستتناولها ('+u+')';
+  $('#nm').textContent=it.name;$('#bcTxt').textContent=(it.bc?'الباركود: '+it.bc+' · ':'')+'حجم الحصة: '+it.s+' '+u;
+  $('#srv').textContent='⚠️ تأكد من حجم الحصة التي ستتناولها. حجم الحصة المسجّل في الملف: '+it.s+' '+u;
   $('#g').value=it.s;
   $('#chips').innerHTML='';
   [[0.5,'½ حصة'],[1,'حصة'],[1.5,'1½ حصة'],[2,'حصتان']].forEach(([m,l])=>{
