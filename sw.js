@@ -5,6 +5,7 @@ self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(async c=>{awa
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{
   if(e.request.method!=='GET')return;
+  if(e.request.url.includes('cloudflareinsights.com'))return;
   e.respondWith(fetch(e.request,e.request.mode==='navigate'||e.request.url.startsWith(self.location.origin)?{cache:'no-store'}:undefined).then(r=>{
     if(r.ok||r.type==='opaque'){const cp=r.clone();caches.open(C).then(c=>c.put(e.request,cp))}
     return r;
