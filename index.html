@@ -78,13 +78,10 @@ details button{flex:1}
     <summary>⚙️ قاعدة البيانات والتحديث</summary>
     <p id="stat" class="mut"></p>
     <div class="row">
-      <button id="fileBtn">📂 تحديث من ملف Excel</button>
       <button id="syncBtn">🔄 مزامنة من الإنترنت</button>
-      <button id="urlBtn">🔗 رابط ملف Excel</button>
     </div>
-    <input type="file" id="file" accept=".xlsx,.xls,.csv" hidden>
   </details>
-  <p class="note"><a href="help.html">📖 تعليمات الاستخدام</a> · الإصدار الأول · 15 نوفمبر 2026</p>
+  <p class="note"><a href="help.html">📖 تعليمات الاستخدام</a> · الإصدار الأول · 19 نوفمبر 2026</p>
   <p class="note">القيم مأخوذة من الملصق الغذائي وتقريبية؛ تحقّق من الملصق عند الشك، واتبع خطة جرعات الإنسولين التي حددها طبيبك.</p>
 </main>
 
@@ -144,7 +141,7 @@ let st=JSON.parse(localStorage.getItem('carbdb')||'null')||{items:[],updated:nul
 const save=()=>localStorage.setItem('carbdb',JSON.stringify(st));
 const msg=t=>{$('#msg').textContent=t||''};
 function renderStat(){
-  $('#stat').textContent=st.items.length?`عدد الوجبات: ${st.items.length} · آخر تحديث: ${new Date(st.updated).toLocaleString('ar-SA')} · المصدر: ${st.source==='file'?'ملف على الجوال':'الإنترنت'}`:'لا توجد بيانات بعد — اختر ملف Excel.';
+  $('#stat').textContent=st.items.length?`عدد الوجبات: ${st.items.length} · آخر تحديث: ${new Date(st.updated).toLocaleString('ar-SA')}`:'لا توجد بيانات بعد — اضغط «مزامنة من الإنترنت».';
 }
 function loadBuf(buf){
   const wb=XLSX.read(buf,{type:'array'});
@@ -152,23 +149,12 @@ function loadBuf(buf){
   return parseRows(aoa);
 }
 async function sync(){
-  const u=st.url||'meals.xlsx';
+  const u='meals.xlsx';
   const res=await fetch(u+(u.includes('?')?'&':'?')+'t='+Date.now(),{cache:'no-store'});
   if(!res.ok)throw new Error('تعذر تحميل الملف ('+res.status+')');
   st.items=loadBuf(await res.arrayBuffer());st.updated=Date.now();st.source='web';save();renderStat();
 }
-$('#fileBtn').onclick=()=>$('#file').click();
-$('#file').onchange=async e=>{
-  const f=e.target.files[0];if(!f)return;
-  try{st.items=loadBuf(await f.arrayBuffer());st.updated=Date.now();st.source='file';save();renderStat();msg('تم تحديث القاعدة: '+st.items.length+' وجبة')}
-  catch(err){msg('تعذر قراءة الملف: '+err.message)}
-  e.target.value='';
-};
 $('#syncBtn').onclick=async()=>{try{await sync();msg('تمت المزامنة: '+st.items.length+' وجبة')}catch(e){msg('تعذرت المزامنة: '+e.message)}};
-$('#urlBtn').onclick=()=>{
-  const u=prompt('رابط ملف Excel (xlsx) المستضاف. اتركه فارغًا لاستخدام meals.xlsx الموجود مع التطبيق:',st.url||'');
-  if(u===null)return;st.url=u.trim();st.source='web';save();$('#syncBtn').click();
-};
 
 // ---------- البحث والعرض ----------
 let cur=null;
@@ -176,7 +162,7 @@ function lookup(code){
   const b=normBC(code);
   const it=b&&st.items.find(i=>i.bc&&normBC(i.bc)===b);
   $('#list').innerHTML='';
-  if(!it){$('#card').hidden=true;msg('الباركود '+digits(code)+' غير موجود في القاعدة. جرّب البحث بالاسم، أو أضفه في ملف Excel ثم حدّث.');return}
+  if(!it){$('#card').hidden=true;msg('الباركود '+digits(code)+' غير موجود في القاعدة. جرّب البحث بالاسم، أو راسلنا لإضافته (راجع صفحة التعليمات).');return}
   msg('');show(it);
 }
 function search(live){
@@ -260,9 +246,9 @@ $('#scanBtn').onclick=()=>{lastCode='';resetAll();openCam()};$('#closeCam').oncl
 // ---------- بدء التشغيل ----------
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 renderStat();
-if(st.source!=='file'&&location.protocol!=='file:'){
-  sync().catch(()=>{if(!st.items.length)msg('تعذر تحميل القاعدة. اختر ملف Excel من الإعدادات.')});
-}else if(!st.items.length){msg('اختر ملف Excel من الإعدادات لبدء الاستخدام.')}
+if(location.protocol!=='file:'){
+  sync().catch(()=>{if(!st.items.length)msg('تعذر تحميل القاعدة. تأكد من الاتصال بالإنترنت ثم اضغط «مزامنة من الإنترنت» من الإعدادات.')});
+}else if(!st.items.length){msg('افتح التطبيق من الرابط المخصص له لتحميل القاعدة.')}
 </script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "299456f0429f48e198b8fa16b0f0b05c"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
