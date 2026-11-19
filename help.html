@@ -17,11 +17,16 @@ li{margin:3px 0}
 .warn{border-color:#f59e0b}
 .mut{color:var(--mut)}
 a{color:var(--pri)}
+.top{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0;border-bottom:1px solid var(--bd)}
+.back{display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-weight:700;background:var(--pri);color:#fff;border-radius:12px;padding:8px 14px}
+@media (prefers-color-scheme:dark){.back{color:#06201c}}
+@media print{.top{display:none}}
 @media print{body{background:#fff;color:#000}section{break-inside:avoid}}
 </style>
 </head>
 <body>
 <main>
+<div class="top"><a class="back" href="index.html" aria-label="الرجوع للصفحة الرئيسية">🏠 الصفحة الرئيسية</a></div>
 <h1>🩸 تعليمات استخدام عدّاد الكربوهيدرات</h1>
 <p class="mut">يساعدك التطبيق على معرفة كمية الكربوهيدرات في الوجبة عن طريق مسح الباركود أو البحث بالاسم.</p>
 
@@ -79,6 +84,7 @@ a{color:var(--pri)}
 </section>
 <p class="mut" style="text-align:center;font-size:13px">يحسب التطبيق عدد الزيارات فقط لأغراض إحصائية، ولا يتتبّع الأفراد ولا يجمع بياناتهم الشخصية.</p>
 <p class="mut" style="text-align:center">عدّاد الكربوهيدرات · الإصدار الأول · 19 نوفمبر 2026</p>
+<p style="text-align:center"><a class="back" href="index.html">🏠 الرجوع للصفحة الرئيسية</a></p>
 </main>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "299456f0429f48e198b8fa16b0f0b05c"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
